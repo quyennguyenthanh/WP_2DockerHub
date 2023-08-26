@@ -77,5 +77,5 @@ jobs:
             docker rm mysql
 
             # Chạy container mới với image đã pull về bên trên
-            docker run -d -p 80:80 --name wordpress ${{ secrets.DOCKERHUB_USERNAME }}/wordpress:${{ github.sha }}
-            docker run -d -p 80:80 --name mysql ${{ secrets.DOCKERHUB_USERNAME }}/mysql:${{ github.sha }}
+          docker run -d -p 80:80 --name wordpress ${{ secrets.DOCKERHUB_USERNAME }}/wordpress:${{ github.sha }}
+          docker run -d -p 80:80 --name mysql ${{ secrets.DOCKERHUB_USERNAME }}/mysql:${{ github.sha }}
