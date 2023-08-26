@@ -4,7 +4,7 @@ name: Docker CI/CD Pipeline
 on:
   push:
     branches:
-      - master
+      - develop
 
 # Định nghĩa các jobs cần thực hiện 
 jobs:
@@ -14,44 +14,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+      - name: Checkout code
         # Sử dụng action "checkout" để sao copy code từ repository vào máy ảo Ubuntu
-      uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
-    - name: Login to Docker Hub
+      - name: Login to Docker Hub
           # Sử dụng action "docker/login-action" để đăng nhập vào Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: Build wordpress image
+      - name: Build and test
         # Build và test image được build ra bằng Docker 
-      run: |
-        docker build -t wordpress .
+        run: |
+          docker build -t wordpress .
 
-    - name: Push image to Docker Hub
-      uses: docker/build-push-action@v2
+      - name: Push image to Docker Hub
+        uses: docker/build-push-action@v2
         # Sử dụng action "docker/build-push-action" để đẩy image lên Docker Hub
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/wordpress:${{ github.sha }}
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/wordpress:${{ github.sha }}
 
-    - name: Build mysql image
+      - name: Build mysql image
         # Build và test image được build ra bằng Docker 
-      run: |
+        run: |
           docker build -t mysql .
 
-    - name: Push image to Docker Hub
-      uses: docker/build-push-action@v2
+      - name: Push image to Docker Hub
+        uses: docker/build-push-action@v2
         # Sử dụng action "docker/build-push-action" để đẩy image lên Docker Hub
-      with:
-        context: .
-        push: true
-        tags: ${{ secrets.DOCKERHUB_USERNAME }}/mysql:${{ github.sha }}
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mysql:${{ github.sha }}
 
- # Job 2: Deploy
+# Job 2: Deploy
   deploy:
     needs: build_and_test
     runs-on: ubuntu-latest
