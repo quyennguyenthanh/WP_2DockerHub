@@ -20,11 +20,9 @@ jobs:
   
     # Deploy to Staging
   staging:
-    if: github.event.input.releaseType == 'build'
     name: Deploy to Staging
     environment:
       name: Staging
-    needs: [build]
     runs-on: ubuntu-latest
     # Add test line
     steps:
