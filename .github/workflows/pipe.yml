@@ -1,62 +1,58 @@
-name: Docker CI/CD Pipeline
+name: Build and Push Docker Image to Docker Hub
 
-# Xác định sự kiện trigger cho pipeline, trong trường hợp này là push lên nhánh develop
 on:
   push:
     branches:
       - master
 
-# Định nghĩa các jobs cần thực hiện 
+env:
+  # Use docker.io for Docker Hub if empty
+  REGISTRY: docker.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-   # Job 1: build và test
-   # Job thực thi trên máy ảo ubuntu
+
   build:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        # Sử dụng action "checkout" để sao copy code từ repository vào máy ảo Ubuntu
-        uses: actions/checkout@v2
-  
-    # Deploy to Staging
-  staging:
-    name: Deploy to Staging
-    environment:
-      name: Staging
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker-compose build --no-cache --force-rm 
+  test:
     runs-on: ubuntu-latest
-    # Add test line
     steps:
+      - uses: actions/checkout@v2
+      - name: Test the Docker image
+        run: docker-compose up -d 
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-          # Sử dụng action "docker/login-action" để đăng nhập vào Docker Hub
-        uses: docker/login-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build and test
-        # Build và test image được build ra bằng Docker 
-        run: |
-          docker build -t wordpress .
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - name: Push image to Docker Hub
+      - name: Build and push Docker image
         uses: docker/build-push-action@v2
-        # Sử dụng action "docker/build-push-action" để đẩy image lên Docker Hub
         with:
-          context: .
+          context: "{{defaultContext}}"
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/wordpress:${{ github.sha }}
-
-      - name: Build mysql image
-        # Build và test image được build ra bằng Docker 
-        run: |
-          docker build -t mysql .
-
-      - name: Push image to Docker Hub
-        uses: docker/build-push-action@v2
-        # Sử dụng action "docker/build-push-action" để đẩy image lên Docker Hub
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mysql:${{ github.sha }}
-
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
