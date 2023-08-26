@@ -5,6 +5,12 @@ on:
   push:
     branches:
       - master
+workflow_dispatch:
+    input:
+      releaseType:
+      description: 'Where to release (staging or prod)?'
+      require: true
+      default: 'staging'
 
 # Định nghĩa các jobs cần thực hiện 
 jobs:
