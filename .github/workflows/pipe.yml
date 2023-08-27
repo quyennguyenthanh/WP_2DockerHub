@@ -46,18 +46,12 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: my-docker-hub-namespace/my-docker-hub-repository
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          context: ./dockerfile
-          file: ./dockerfile/output.Dockerfile
-          build-args: |
-            DOCKER_METADATA_OUTPUT_VERSION
-            DOCKER_METADATA_OUTPUT_TAGS
-            DOCKER_METADATA_OUTPUT_LABELS
-            DOCKER_METADATA_OUTPUT_JSON
+          context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
