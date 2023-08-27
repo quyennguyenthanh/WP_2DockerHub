@@ -4,11 +4,6 @@ on:
   push:
     branches:
       - master
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: hub.docker.com
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
 
@@ -42,16 +37,11 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: my-docker-hub-namespace/my-docker-hub-repository
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+          tags: boofi/wordpressweb:latest, boofi/wordpressweb:${{ github.run_number}}
+          
