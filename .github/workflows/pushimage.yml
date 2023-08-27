@@ -9,36 +9,25 @@ on:
 jobs:
 
   build:
-
+    -name: Build container
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker-compose build --no-cache --force-rm 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Test the Docker image
-        run: docker-compose up -d 
-  push_to_registry:
-    name: Push Docker image to Docker Hub
+    - name: Check code
+      uses: actions/checkout@v3
+    
+  
+    
 
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v3
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: boofi/wordpressweb:latest, boofi/wordpressweb:${{ github.run_number}}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: boofi/wordpressweb:latest, boofi/wordpressweb:${{ github.run_number}}
