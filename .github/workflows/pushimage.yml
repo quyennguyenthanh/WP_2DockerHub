@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    -name: Build container
+    name: Build container
     runs-on: ubuntu-latest
     
     steps:
