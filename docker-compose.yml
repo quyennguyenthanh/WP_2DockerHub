@@ -3,34 +3,85 @@ version: '3.1'
 services:
 
   wordpress:
+    build:
+      context: ./.docker/wordpress
+      dockerfile: Dockerfile
+    depends_on:
+      - db
     image: wordpress
     restart: always
-    ports:
-      - "8000:80"
+    env_file: .env
+    
     environment:
       WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_USER: wpuser
-      WORDPRESS_DB_PASSWORD: examplepass
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
       WORDPRESS_DB_NAME: wpdb
-    volumes: ["./html:/var/www/html"]
+    volumes: 
+      - ./wordpress:/var/www/html
+      - ./.docker/wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
     networks:
       - wp
 
   db:
     image: mysql:5.7
     restart: always
+    env_file: .env
+
     environment:
       MYSQL_DATABASE: wpdb
-      MYSQL_USER: wpuser
-      MYSQL_PASSWORD: examplepass
-      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - db:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - wp
+  webserver:
+    build: 
+      context: ./.docker/nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - wordpress
+      - phpmyadmin
+    image: nginx
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "${WP_PORT:-443}:443"
+      - "${MYADMIN_PORT:-8000}:8080"
+    volumes:
+      - ./wordpress:/var/www/html/wordpress
+      - phpmyadmin:/var/www/html/phpmyadmin
+      - ./nginx-conf:/etc/nginx/conf.d
+    networks:
+      wp:
+        aliases:
+          - localhost
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin:fpm-alpine
+    container_name: phpmyadmin
+    restart: always
+    env_file: .env
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - phpmyadmin:/var/www/html
     networks:
       - wp
 
 networks:
   wp:
+    driver: bridge
 volumes:
   wordpress:
   db:
+    driver: local
+  phpmyadmin:
+    driver: local
